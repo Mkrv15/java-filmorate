@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.controller;
 
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -18,12 +17,12 @@ public class FilmController {
     private final Map<Integer, Film> films = new HashMap<>();
 
     @GetMapping
-    public Collection<Film> findAll(){
+    public Collection<Film> findAll() {
         return films.values();
     }
 
     @PostMapping
-    public Film create(@RequestBody Film film){
+    public Film create(@RequestBody Film film) {
         if (film.isValid()) {
             film.setId(getNextId());
             log.debug("Фильму {} присвоен id", film);
@@ -31,34 +30,31 @@ public class FilmController {
             log.info("В память добавлен фильм: {}", film);
             return film;
         }
-        throw new ValidationException("Название фильма не может быть пустым." +
-                " Максимальная длинна описания - 200 символов. Дата релиза - не раньше 28 декабря 1895 года. " +
-                "Продолжительность фильма должна быть положительной.");
+        throw new ValidationException();
     }
 
     @PutMapping
-    public Film update(@RequestBody Film newFilm){
-        if (!newFilm.isValid()){
-            throw new ValidationException("Название фильма не может быть пустым." +
-                    " Максимальная длинна описания - 200 символов. Дата релиза - не раньше 28 декабря 1895 года. " +
-                    "Продолжительность фильма должна быть положительной.");
+    public Film update(@RequestBody Film newFilm) {
+        if (!newFilm.isValid()) {
+            throw new ValidationException();
         }
-        if (films.containsKey(newFilm.getId())){
+        if (films.containsKey(newFilm.getId())) {
             Film oldFilm = films.get(newFilm.getId());
-            log.info("Фильм {} изменен на {}",oldFilm,newFilm);
+            log.info("Фильм {} изменен на {}", oldFilm, newFilm);
             oldFilm.setDuration(newFilm.getDuration());
             oldFilm.setName(newFilm.getName());
             oldFilm.setDescription(newFilm.getDescription());
             oldFilm.setReleaseDate(newFilm.getReleaseDate());
             return oldFilm;
         }
-        throw new NotFoundException("Фильм с id = " + newFilm.getId() + " не найден");
+        log.error("Фильм с id = {} не найден", newFilm.getId());
+        throw new NotFoundException();
     }
 
-    private int getNextId(){
+    private int getNextId() {
         int maxCounterInt = films.keySet()
                 .stream()
-                .mapToInt(i->i)
+                .mapToInt(i -> i)
                 .max()
                 .orElse(0);
         return ++maxCounterInt;
