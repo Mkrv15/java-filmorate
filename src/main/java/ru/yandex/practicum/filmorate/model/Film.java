@@ -6,9 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
 
-/**
- * Film.
- */
 @Slf4j
 @Builder
 @Data
@@ -19,7 +16,6 @@ public class Film {
     private String description;
     private LocalDate releaseDate;
     private int duration;
-
 
     public boolean isValid() {
         return validateName() && validateDescription() && validateReleaseDate() && validateDuration();
