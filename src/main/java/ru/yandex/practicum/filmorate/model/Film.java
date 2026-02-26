@@ -1,14 +1,15 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 
 import java.time.LocalDate;
 
 @Slf4j
-@Builder
-@Data
+@Getter
+@Setter
+@ToString
 public class Film {
     public static final LocalDate DATE_FIRST_FILM = LocalDate.of(1895, 12, 28);
     private int id;
@@ -16,6 +17,16 @@ public class Film {
     private String description;
     private LocalDate releaseDate;
     private int duration;
+
+    public Film(String name, String description, LocalDate releaseDate, int duration) {
+        this.name = name;
+        this.description = description;
+        this.releaseDate = releaseDate;
+        this.duration = duration;
+        if (!isValid()) {
+            throw new ValidationException();
+        }
+    }
 
     public boolean isValid() {
         return validateName() && validateDescription() && validateReleaseDate() && validateDuration();
