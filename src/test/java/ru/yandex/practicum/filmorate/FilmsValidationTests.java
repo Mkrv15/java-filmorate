@@ -14,8 +14,8 @@ public class FilmsValidationTests {
 
     @BeforeEach
     void setUp() {
-        film = new Film("name", "description"
-                , LocalDate.of(2000, 10, 15), 120);
+        film = new Film("name", "description",
+                LocalDate.of(2000, 10, 15), 120);
     }
 
     @Test
