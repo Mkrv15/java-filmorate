@@ -33,9 +33,8 @@ public class FilmController {
     @PutMapping
     public Film update(@RequestBody Film newFilm) {
         if (films.containsKey(newFilm.getId())) {
-            Film oldFilm = films.get(newFilm.getId());
+            Film oldFilm = films.replace(newFilm.getId(), newFilm);
             log.info("Фильм {} изменен на {}", oldFilm, newFilm);
-            films.replace(newFilm.getId(), newFilm);
             return newFilm;
         }
         log.error("Фильм с id = {} не найден", newFilm.getId());

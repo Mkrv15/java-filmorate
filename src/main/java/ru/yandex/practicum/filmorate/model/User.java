@@ -1,8 +1,11 @@
 package ru.yandex.practicum.filmorate.model;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 
 import java.time.LocalDate;
 
@@ -13,52 +16,31 @@ import java.time.LocalDate;
 @EqualsAndHashCode
 public class User {
     private int id;
+
+    @NotNull(message = "Почта не может быть null")
+    @NotBlank(message = "Почта не может быть пустой")
+    @Email(message = "Неверный формат почты")
     private final String email;
+
+    @NotBlank(message = "Логин не может быть пустым")
+    @NotNull(message = "Логин не может быть null")
     private final String login;
+
     private final String name;
+
+    @NotNull(message = "День рождения не может быть null")
+    @Past(message = "День рождения не может быть в будущем")
     private final LocalDate birthday;
 
     public User(String email, String login, String name, LocalDate birthday) {
         this.email = email;
         this.login = login;
         this.birthday = birthday;
-        if (isValid()) {
-            if (name == null || name.isBlank()) {
-                this.name = login;
-                log.debug("Пользователю {} в качестве имени присвоен логин", name);
-            } else {
-                this.name = name;
-            }
+        if (name == null || name.isBlank()) {
+            this.name = login;
+            log.debug("Пользователю {} в качестве имени присвоен логин", name);
         } else {
-            throw new ValidationException();
+            this.name = name;
         }
-    }
-
-    public boolean isValid() {
-        return validateEmail() && validateLogin() && validateBirthday();
-    }
-
-    private boolean validateEmail() {
-        if (!(email == null || email.isBlank()) && email.contains("@")) {
-            return true;
-        }
-        log.error("Электронная почта не может быть пустой и должна содержать символ @");
-        return false;
-    }
-
-    private boolean validateLogin() {
-        if (!(login == null || login.isBlank() || login.contains(" "))) {
-            return true;
-        }
-        log.error("Логин не может быть пустым и содержать пробелы");
-        return false;
-    }
-
-    private boolean validateBirthday() {
-        if (birthday.isBefore(LocalDate.now())) {
-            return true;
-        }
-        log.error("Дата рождения не может быть в будущем");
-        return false;
     }
 }
