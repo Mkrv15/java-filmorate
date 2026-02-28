@@ -14,7 +14,6 @@ import java.util.Set;
 
 public class UsersValidationTests {
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-    private Set<ConstraintViolation<User>> violations;
     private User user;
 
     @Test
