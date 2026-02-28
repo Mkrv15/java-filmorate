@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +25,7 @@ public class UserController {
     }
 
     @PostMapping
-    public User create(@RequestBody User user) {
+    public User create(@Valid @RequestBody User user) {
         user.setId(getNextId());
         log.debug("Пользователю {} присвоен id", user);
         users.put(user.getId(), user);
@@ -33,7 +34,7 @@ public class UserController {
     }
 
     @PutMapping
-    public User update(@RequestBody User newUser) {
+    public User update(@Valid @RequestBody User newUser) {
         if (users.containsKey(newUser.getId())) {
             User oldUser = users.replace(newUser.getId(), newUser);
             log.info("Пользователь {} изменен на {}", oldUser, newUser);
