@@ -2,9 +2,10 @@ package ru.yandex.practicum.filmorate.model;
 
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Slf4j
 @Getter
@@ -12,21 +13,21 @@ import java.time.LocalDate;
 @ToString
 public class Film {
     public static final LocalDate DATE_FIRST_FILM = LocalDate.of(1895, 12, 28);
-    private int id;
+    private long id;
     private String name;
     private String description;
     private LocalDate releaseDate;
     private int duration;
+    private Set<Long> likes;
 
     public Film(String name, String description, LocalDate releaseDate, int duration) {
         this.name = name;
         this.description = description;
         this.releaseDate = releaseDate;
         this.duration = duration;
-        if (!isValid()) {
-            throw new ValidationException();
-        }
+        this.likes = new HashSet<>();
     }
+
 
     public boolean isValid() {
         return validateName() && validateDescription() && validateReleaseDate() && validateDuration();
