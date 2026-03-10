@@ -19,8 +19,7 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler
     public Map<String, String> handleNotFound(final NotFoundException e) {
-        return Map.of("error", "Объект не найден"
-                , "Message", e.getMessage());
+        return Map.of("error", "Объект не найден", "Message", e.getMessage());
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -34,9 +33,7 @@ public class ErrorHandler {
     @ExceptionHandler
     public Map<String, String> handleException(final Exception e) {
         log.error("НЕОБРАБОТАННОЕ ИСКЛЮЧЕНИЕ: ", e);
-        return Map.of(
-                "error", "Ошибка сервера"
-        );
+        return Map.of("error", "Ошибка сервера");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -47,9 +44,6 @@ public class ErrorHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining(", "));
         log.error("Ошибка валидации: {}", errorMessage);
-        return Map.of(
-                "error", "Ошибка валидации"
-                , "message", errorMessage
-        );
+        return Map.of("error", "Ошибка валидации", "message", errorMessage);
     }
 }
