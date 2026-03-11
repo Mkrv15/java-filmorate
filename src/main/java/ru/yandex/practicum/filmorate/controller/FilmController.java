@@ -14,22 +14,21 @@ import java.util.*;
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-    private final FilmStorage filmStorage;
     private final FilmService filmService;
 
     @GetMapping
     public List<Film> findAll() {
-        return filmStorage.findAll();
+        return filmService.findAll();
     }
 
     @PostMapping
     public Film create(@RequestBody Film film) {
-        return filmStorage.create(film);
+        return filmService.create(film);
     }
 
     @PutMapping
     public Film update(@RequestBody Film newFilm) {
-        return filmStorage.update(newFilm);
+        return filmService.update(newFilm);
     }
 
     @PutMapping("/{id}/like/{userId}")

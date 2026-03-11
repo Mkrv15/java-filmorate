@@ -23,6 +23,18 @@ public class FilmService {
         this.userStorage = userStorage;
     }
 
+    public List<Film> findAll() {
+        return filmStorage.findAll();
+    }
+
+    public Film create(Film film) {
+        return filmStorage.create(film);
+    }
+
+    public Film update(Film newFilm) {
+        return filmStorage.update(newFilm);
+    }
+
     public void addLike(long userId, long filmId) {
         Film film = filmStorage.findById(filmId);
         User user = userStorage.findById(userId);

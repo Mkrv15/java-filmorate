@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -18,32 +17,32 @@ public class ErrorHandler {
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler
-    public Map<String, String> handleNotFound(final NotFoundException e) {
-        return Map.of("error", "Объект не найден", "Message", e.getMessage());
+    public ErrorResponse handleNotFound(final NotFoundException e) {
+        return new ErrorResponse("Объект не найден", e.getMessage());
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler
-    public Map<String, String> handleValidation(final ValidationException e) {
+    public ErrorResponse handleValidation(final ValidationException e) {
         log.error("Ошибка валидации {}", e.getMessage());
-        return Map.of("error", "Ошибка валидации");
+        return new ErrorResponse("Ошибка валидации", e.getMessage());
     }
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler
-    public Map<String, String> handleException(final Exception e) {
+    public ErrorResponse handleException(final Exception e) {
         log.error("НЕОБРАБОТАННОЕ ИСКЛЮЧЕНИЕ: ", e);
-        return Map.of("error", "Ошибка сервера");
+        return new ErrorResponse("Ошибка сервера", e.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+    public ErrorResponse handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
         // Собираем сообщения об ошибках
         String errorMessage = e.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining(", "));
         log.error("Ошибка валидации: {}", errorMessage);
-        return Map.of("error", "Ошибка валидации", "message", errorMessage);
+        return new ErrorResponse("Ошибка валидации", errorMessage);
     }
 }

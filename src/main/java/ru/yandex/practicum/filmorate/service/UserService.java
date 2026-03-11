@@ -19,6 +19,18 @@ public class UserService {
         this.userStorage = userStorage;
     }
 
+    public List<User> findAll() {
+        return userStorage.findAll();
+    }
+
+    public User create(User user) {
+        return userStorage.create(user);
+    }
+
+    public User update(User newUser) {
+        return userStorage.update(newUser);
+    }
+
     public void addFriend(long userId, long friendId) {
         User user = userStorage.findById(userId);
         User friend = userStorage.findById(friendId);
