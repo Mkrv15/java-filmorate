@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.model;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import ru.yandex.practicum.filmorate.enums.Status;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -33,6 +34,7 @@ public class User {
     private LocalDate birthday;
 
     private Set<Long> friends;
+    private Status status;
 
     public User(String email, String login, String name, LocalDate birthday) {
         this.email = email;

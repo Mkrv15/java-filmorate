@@ -2,6 +2,8 @@ package ru.yandex.practicum.filmorate.model;
 
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import ru.yandex.practicum.filmorate.enums.Genre;
+import ru.yandex.practicum.filmorate.enums.MPA;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -19,6 +21,8 @@ public class Film {
     private LocalDate releaseDate;
     private int duration;
     private Set<Long> likes;
+    private Genre genre;
+    private MPA mpa;
 
     public Film(String name, String description, LocalDate releaseDate, int duration) {
         this.name = name;
