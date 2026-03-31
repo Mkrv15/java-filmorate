@@ -5,6 +5,8 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Slf4j
 @Getter
@@ -12,30 +14,34 @@ import java.time.LocalDate;
 @ToString
 @EqualsAndHashCode
 public class User {
-    private int id;
+    private long id;
 
     @NotNull(message = "Почта не может быть null")
     @NotBlank(message = "Почта не может быть пустой")
     @Email(message = "Неверный формат почты")
-    private final String email;
+    private String email;
 
     @NotBlank(message = "Логин не может быть пустым")
     @NotNull(message = "Логин не может быть null")
-    private final String login;
+    @Pattern(regexp = "\\S+", message = "Логин не должен содержать пробелы")
+    private String login;
 
-    private final String name;
+    private String name;
 
     @NotNull(message = "День рождения не может быть null")
     @Past(message = "День рождения не может быть в будущем")
-    private final LocalDate birthday;
+    private LocalDate birthday;
+
+    private Set<Long> friends;
 
     public User(String email, String login, String name, LocalDate birthday) {
         this.email = email;
         this.login = login;
         this.birthday = birthday;
+        this.friends = new HashSet<>();
         if (name == null || name.isBlank()) {
             this.name = login;
-            log.debug("Пользователю {} в качестве имени присвоен логин", name);
+            log.debug("Пользователю {} в качестве имени присвоен логин", login);
         } else {
             this.name = name;
         }
