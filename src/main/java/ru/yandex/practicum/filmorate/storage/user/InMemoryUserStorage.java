@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 
 @Slf4j
-@Component
+@Component("inMemoryUserStorage")
 public class InMemoryUserStorage implements UserStorage {
     private final Map<Long, User> users = new ConcurrentHashMap<>();
     private final AtomicInteger atomicInteger = new AtomicInteger();
@@ -64,7 +64,7 @@ public class InMemoryUserStorage implements UserStorage {
         return user;
     }
 
-    private int getNextId() {
-        return atomicInteger.incrementAndGet();
+    private Long getNextId() {
+        return (long) atomicInteger.incrementAndGet();
     }
 }

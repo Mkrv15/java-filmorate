@@ -1,0 +1,55 @@
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    username VARCHAR(40),
+    login VARCHAR(40) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    birthday DATE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS mpa (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(40) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS films (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name VARCHAR(40) NOT NULL,
+    description VARCHAR(200),
+    mpa_id INTEGER NOT NULL REFERENCES mpa(id),
+    release_date DATE NOT NULL,
+    duration REAL NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS status (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(40) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS friends (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    to_user_id BIGINT NOT NULL REFERENCES users(id),
+    from_user_id BIGINT NOT NULL REFERENCES users(id),
+    status_id INTEGER NOT NULL REFERENCES status(id),
+    CONSTRAINT unique_friends UNIQUE (from_user_id, to_user_id)
+);
+
+CREATE TABLE IF NOT EXISTS genre (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name VARCHAR(40) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS genres_film (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    film_id BIGINT NOT NULL REFERENCES films(id),
+    genre_id INTEGER NOT NULL REFERENCES genre(id),
+    CONSTRAINT unique_genre_film UNIQUE (genre_id,film_id)
+);
+
+CREATE TABLE IF NOT EXISTS likes (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id),
+    film_id BIGINT NOT NULL REFERENCES films(id),
+    CONSTRAINT unique_user_film UNIQUE (user_id,film_id)
+);
+
+

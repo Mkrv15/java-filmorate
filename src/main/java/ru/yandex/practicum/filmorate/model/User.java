@@ -15,7 +15,7 @@ import java.util.Set;
 @ToString
 @EqualsAndHashCode
 public class User {
-    private long id;
+    private Long id;
 
     @NotNull(message = "Почта не может быть null")
     @NotBlank(message = "Почта не может быть пустой")
@@ -47,5 +47,8 @@ public class User {
         } else {
             this.name = name;
         }
+    }
+
+    public User() {
     }
 }
