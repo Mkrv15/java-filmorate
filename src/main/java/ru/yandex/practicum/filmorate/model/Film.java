@@ -1,71 +1,54 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.*;
-import lombok.extern.slf4j.Slf4j;
-import ru.yandex.practicum.filmorate.enums.Genre;
-import ru.yandex.practicum.filmorate.enums.MPA;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+import lombok.Builder;
+import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
-@Slf4j
-@Getter
-@Setter
-@ToString
+@Data
+@Builder
 public class Film {
-    public static final LocalDate DATE_FIRST_FILM = LocalDate.of(1895, 12, 28);
-    private long id;
+    private Long id;
+    @NotBlank
     private String name;
+    @Size(min = 1, max = 200)
     private String description;
+    @NotNull
     private LocalDate releaseDate;
-    private int duration;
-    private Set<Long> likes;
-    private Genre genre;
-    private MPA mpa;
+    @Positive
+    private Integer duration;
+    private Set<Long> likes = new HashSet<>();
+    @NotNull
+    private Mpa mpa;
+    private Set<Genre> genres = new HashSet<>();
 
-    public Film(String name, String description, LocalDate releaseDate, int duration) {
+    public Film(Long id, String name, String description, LocalDate releaseDate, Integer duration,
+                Set<Long> likes, Mpa mpa, Set<Genre> genres) {
+        this.id = id;
         this.name = name;
         this.description = description;
         this.releaseDate = releaseDate;
         this.duration = duration;
-        this.likes = new HashSet<>();
+        this.likes = likes;
+        this.mpa = mpa;
+        this.genres = genres;
     }
 
-
-    public boolean isValid() {
-        return validateName() && validateDescription() && validateReleaseDate() && validateDuration();
-    }
-
-    private boolean validateName() {
-        if (!(name == null || name.isBlank())) {
-            return true;
-        }
-        log.error("Название не может быть пустым");
-        return false;
-    }
-
-    private boolean validateDescription() {
-        if (description.length() <= 200) {
-            return true;
-        }
-        log.error("Максимальная длина описания — 200 символов");
-        return false;
-    }
-
-    private boolean validateReleaseDate() {
-        if (releaseDate.isAfter(DATE_FIRST_FILM)) {
-            return true;
-        }
-        log.error("Дата релиза — не раньше 28 декабря 1895 года");
-        return false;
-    }
-
-    private boolean validateDuration() {
-        if (duration > 0) {
-            return true;
-        }
-        log.error("Продолжительность фильма должна быть положительным числом");
-        return false;
+    public Map<String, Object> toMap() {
+        Map<String, Object> values = new HashMap<>();
+        values.put("name", name);
+        values.put("description", description);
+        values.put("release_Date", releaseDate);
+        values.put("duration", duration);
+        values.put("rating_id", mpa.getId());
+        return values;
     }
 }

@@ -1,54 +1,61 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.*;
-import lombok.*;
-import lombok.extern.slf4j.Slf4j;
-import ru.yandex.practicum.filmorate.enums.Status;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Pattern;
+import lombok.Builder;
+import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
-@Slf4j
-@Getter
-@Setter
-@ToString
-@EqualsAndHashCode
+@Data
+@Builder
 public class User {
     private Long id;
-
-    @NotNull(message = "Почта не может быть null")
-    @NotBlank(message = "Почта не может быть пустой")
-    @Email(message = "Неверный формат почты")
+    @Email
     private String email;
-
-    @NotBlank(message = "Логин не может быть пустым")
-    @NotNull(message = "Логин не может быть null")
-    @Pattern(regexp = "\\S+", message = "Логин не должен содержать пробелы")
+    @NotBlank
+    @Pattern(regexp = "\\S*$")
     private String login;
-
     private String name;
-
-    @NotNull(message = "День рождения не может быть null")
-    @Past(message = "День рождения не может быть в будущем")
+    @PastOrPresent
     private LocalDate birthday;
-
     private Set<Long> friends;
-    private Status status;
 
-    public User(String email, String login, String name, LocalDate birthday) {
+    public User(Long id, String email, String login, String name, LocalDate birthday, Set<Long> friends) {
+        this.id = id;
         this.email = email;
         this.login = login;
-        this.birthday = birthday;
-        this.friends = new HashSet<>();
-        if (name == null || name.isBlank()) {
+        this.name = name;
+        if ((name == null) || (name.isEmpty()) || (name.isBlank())) {
             this.name = login;
-            log.debug("Пользователю {} в качестве имени присвоен логин", login);
+        }
+        this.birthday = birthday;
+        this.friends = friends;
+        if (friends == null) {
+            this.friends = new HashSet<>();
+        }
+    }
+
+    public void setName(String name) {
+        if ((name == null) || (name.isEmpty()) || (name.isBlank())) {
+            this.name = login;
         } else {
             this.name = name;
         }
     }
 
-    public User() {
+    public Map<String, Object> toMap() {
+        Map<String, Object> values = new HashMap<>();
+        values.put("email", email);
+        values.put("login", login);
+        values.put("name", name);
+        values.put("birthday", birthday);
+        return values;
     }
 }
