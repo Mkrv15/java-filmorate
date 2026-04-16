@@ -30,18 +30,52 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getFilms() {
-        String sql = "SELECT * FROM films";
-        return jdbcTemplate.query(sql, (rs, rowNum) -> new Film(
-                rs.getLong("id"),
-                rs.getString("name"),
-                rs.getString("description"),
-                rs.getDate("release_Date").toLocalDate(),
-                rs.getInt("duration"),
-                new HashSet<>(likeDbStorage.getLikes(rs.getLong("id"))),
-                mpaService.getMpaById(rs.getInt("rating_id")),
-                genreService.getFilmGenres(rs.getLong("id")))
-        );
+        String filmsSql = "SELECT f.*, r.id as rating_id, r.name as rating_name " +
+                "FROM films f " +
+                "LEFT JOIN ratings_mpa r ON f.rating_id = r.id";
+        List<Film> films = jdbcTemplate.query(filmsSql, (rs, rowNum) -> {
+            Mpa mpa = new Mpa(rs.getInt("rating_id"), rs.getString("rating_name"));
 
+            return Film.builder()
+                    .id(rs.getLong("id"))
+                    .name(rs.getString("name"))
+                    .description(rs.getString("description"))
+                    .releaseDate(rs.getDate("release_date").toLocalDate())
+                    .duration(rs.getInt("duration"))
+                    .mpa(mpa)
+                    .likes(new HashSet<>())
+                    .genres(new HashSet<>())
+                    .build();
+        });
+        if (films.isEmpty()) return films;
+
+        List<Long> filmsId = films.stream().map(Film::getId).toList();
+        String ids = filmsId.stream().map(String::valueOf).collect(Collectors.joining(","));
+
+        Map<Long, Set<Long>> likesMap = new HashMap<>();
+        String likesSql = "SELECT film_id, user_id FROM film_likes WHERE film_id IN (" + ids + ")";
+        jdbcTemplate.query(likesSql, rs -> {
+            Long filmId = rs.getLong("film_id");
+            likesMap.computeIfAbsent(filmId, k -> new HashSet<>()).add(rs.getLong("user_id"));
+        });
+
+        Map<Long, Set<Genre>> genresMap = new HashMap<>();
+        String genresSql = "SELECT fg.film_id, g.id, g.name FROM film_genres fg " +
+                "JOIN genres g ON fg.genre_id = g.id " +
+                "WHERE fg.film_id IN (" + ids + ") " +
+                "ORDER BY fg.film_id, g.id";
+        jdbcTemplate.query(genresSql, rs -> {
+            Long filmId = rs.getLong("film_id");
+            Genre genre = new Genre(rs.getInt("id"), rs.getString("name"));
+            genresMap.computeIfAbsent(filmId, k -> new HashSet<>()).add(genre);
+        });
+
+        for (Film film : films) {
+            film.setLikes(likesMap.getOrDefault(film.getId(), new HashSet<>()));
+            Set<Genre> genres = genresMap.get(film.getId());
+            film.setGenres(genres == null || genres.isEmpty() ? null : genres);
+        }
+        return films;
     }
 
     @Override

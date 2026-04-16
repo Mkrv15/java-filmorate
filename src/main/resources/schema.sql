@@ -40,6 +40,6 @@ PRIMARY KEY (film_id, user_id)
 CREATE TABLE IF NOT EXISTS friends(
 user_id bigint REFERENCES users (id) ON DELETE CASCADE,
 friend_id bigint REFERENCES users (id) ON DELETE CASCADE,
-status boolean
+CONSTRAINT unique_user_friend UNIQUE (user_id,friend_id)
 );
 

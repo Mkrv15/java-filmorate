@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controllers;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -13,25 +14,20 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/films")
+@RequiredArgsConstructor
 @Slf4j
 public class FilmController {
-    private FilmStorage filmStorage;
-    private FilmService filmService;
+    private final FilmService filmService;
 
-    @Autowired
-    public FilmController(@Qualifier("filmDbStorage") FilmStorage filmStorage, FilmService filmService) {
-        this.filmStorage = filmStorage;
-        this.filmService = filmService;
-    }
 
     @GetMapping
     public List<Film> getFilms() {
-        return filmStorage.getFilms();
+        return filmService.getFilms();
     }
 
     @GetMapping("/{id}")
     public Film getFilmById(@PathVariable Long id) {
-        return filmStorage.getFilmById(id);
+        return filmService.getFilmById(id);
     }
 
     @GetMapping("/popular")
@@ -43,7 +39,7 @@ public class FilmController {
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
         log.info("Получен POST-запрос к эндпоинту: '/films' на добавление фильма");
-        film = filmStorage.create(film);
+        film = filmService.create(film);
         return film;
     }
 
@@ -51,8 +47,7 @@ public class FilmController {
     @PutMapping
     public Film update(@Valid @RequestBody Film film) {
         log.info("Получен PUT-запрос к эндпоинту: '/films' на обновление фильма с ID={}", film.getId());
-        film = filmStorage.update(film);
-        return film;
+        return filmService.update(film);
     }
 
     @PutMapping("/{id}/like/{userId}")
@@ -70,6 +65,6 @@ public class FilmController {
     @DeleteMapping("/{id}")
     public Film delete(@PathVariable Long id) {
         log.info("Получен DELETE-запрос к эндпоинту: '/films' на удаление фильма с ID={}", id);
-        return filmStorage.delete(id);
+        return filmService.delete(id);
     }
 }

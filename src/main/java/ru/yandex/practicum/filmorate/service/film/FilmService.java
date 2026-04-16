@@ -56,8 +56,28 @@ public class FilmService {
 
     public List<Film> getPopular(Integer count) {
         if (count < 1) {
-            new ValidationException("Количество фильмов для вывода не должно быть меньше 1");
+            throw new ValidationException("Количество фильмов для вывода не должно быть меньше 1");
         }
         return likeStorage.getPopular(count);
+    }
+
+    public List<Film> getFilms() {
+        return filmStorage.getFilms();
+    }
+
+    public Film getFilmById(Long filmId) {
+        return filmStorage.getFilmById(filmId);
+    }
+
+    public Film create(Film film) {
+        return filmStorage.create(film);
+    }
+
+    public Film update(Film film) {
+        return filmStorage.update(film);
+    }
+
+    public Film delete(Long filmId) {
+        return filmStorage.delete(filmId);
     }
 }

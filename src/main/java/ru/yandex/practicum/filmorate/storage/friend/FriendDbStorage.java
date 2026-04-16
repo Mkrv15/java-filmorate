@@ -24,15 +24,8 @@ public class FriendDbStorage {
         User user = userStorage.getUserById(userId);
         User friend = userStorage.getUserById(friendId);
         if ((user != null) && (friend != null)) {
-            boolean status = false;
-            if (friend.getFriends().contains(userId)) {
-                status = true;  // дружба стала взаимной
-                String sql = "UPDATE friends SET user_id = ? AND friend_id = ? AND status = ? " +
-                        "WHERE user_id = ? AND friend_id = ?";
-                jdbcTemplate.update(sql, friendId, userId, true, friendId, userId);
-            }
-            String sql = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)";
-            jdbcTemplate.update(sql, userId, friendId, status);
+            String sql = "INSERT INTO friends (user_id, friend_id) VALUES (?, ?)";
+            jdbcTemplate.update(sql, userId, friendId);
         }
     }
 
@@ -43,9 +36,9 @@ public class FriendDbStorage {
             String sql = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
             jdbcTemplate.update(sql, userId, friendId);
             if (friend.getFriends().contains(userId)) {
-                sql = "UPDATE friends SET user_id = ? AND friend_id = ? AND status = ? " +
+                sql = "UPDATE friends SET user_id = ? AND friend_id = ? " +
                         "WHERE user_id = ? AND friend_id = ?";
-                jdbcTemplate.update(sql, friendId, userId, false, friendId, userId);
+                jdbcTemplate.update(sql, friendId, userId, friendId, userId);
             }
         }
     }

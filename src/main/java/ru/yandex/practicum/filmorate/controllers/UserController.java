@@ -59,16 +59,14 @@ public class UserController {
     @PostMapping
     public User create(@Valid @RequestBody User user) {
         log.info("Получен POST-запрос к эндпоинту: '/users' на добавление пользователя");
-        user = userStorage.create(user);
-        return user;
+        return userStorage.create(user);
     }
 
     @ResponseBody
     @PutMapping
     public User update(@Valid @RequestBody User user) {
         log.info("Получен PUT-запрос к эндпоинту: '/users' на обновление пользователя с ID={}", user.getId());
-        user = userStorage.update(user);
-        return user;
+        return userStorage.update(user);
     }
 
     @DeleteMapping("/{id}")

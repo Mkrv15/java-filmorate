@@ -82,7 +82,7 @@ class UserDbTests {
         userStorage.create(new User(null, "b@b.com", "userb", "User B",
                 LocalDate.of(1991, 2, 2), null));
 
-        assertThat(userStorage.getUsers()).isNotEqualTo(2);
+        assertThat(userStorage.getUsers().size()).isEqualTo(2);
     }
 
     @Test
