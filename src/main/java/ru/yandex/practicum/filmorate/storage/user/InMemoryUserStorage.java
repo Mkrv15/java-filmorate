@@ -1,70 +1,86 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.time.LocalDate;
+import java.util.*;
 
-
-@Slf4j
-@Component
+@Component("inMemoryUserStorage")
 public class InMemoryUserStorage implements UserStorage {
-    private final Map<Long, User> users = new ConcurrentHashMap<>();
-    private final AtomicInteger atomicInteger = new AtomicInteger();
 
-    @Override
-    public User create(User user) {
-        user.setId(getNextId());
-        log.debug("Пользователю {} присвоен id", user);
-        users.put(user.getId(), user);
-        log.info("В память добавлен пользователь: {}", user);
-        return user;
+    public Map<Long, User> users;
+
+    private Long currentId;
+
+    public InMemoryUserStorage() {
+        currentId = 0L;
+        users = new HashMap<>();
     }
 
     @Override
-    public User delete(Long id) {
-        User remUser = users.remove(id);
-        if (remUser == null) {
-            log.error("Пользователь с id = {} не найден", id);
-            throw new NotFoundException("Пользователь1 с id = " + id + " не найден");
-        }
-        log.info("Пользователь {} удален", remUser);
-        return remUser;
-    }
-
-    @Override
-    public User update(User newUser) {
-        User oldUser = users.replace(newUser.getId(), newUser);
-        if (oldUser == null) {
-            log.error("Пользователь с id = {} не найден", newUser.getId());
-            throw new NotFoundException("Пользователь2 с id = " + newUser.getId() + " не найден");
-        }
-        log.info("Пользователь {} изменен на {}", oldUser, newUser);
-        return newUser;
-    }
-
-    @Override
-    public List<User> findAll() {
+    public List<User> getUsers() {
         return new ArrayList<>(users.values());
     }
 
     @Override
-    public User findById(long id) {
-        User user = users.get(id);
-        if (user == null) {
-            log.error("Пользователь с id = {} не найден", id);
-            throw new NotFoundException("Пользователь3 с id = " + id + " не найден");
+    public User create(User user) {
+        if (isValidUser(user)) {
+            user.setId(++currentId);
+            users.put(user.getId(), user);
         }
         return user;
     }
 
-    private int getNextId() {
-        return atomicInteger.incrementAndGet();
+    @Override
+    public User update(User user) {
+        if (user.getId() == null) {
+            throw new ValidationException("Передан пустой аргумент!");
+        }
+        if (!users.containsKey(user.getId())) {
+            throw new UserNotFoundException("Пользователь с ID=" + user.getId() + " не найден!");
+        }
+        if (isValidUser(user)) {
+            users.put(user.getId(), user);
+        }
+        return user;
+    }
+
+    @Override
+    public User getUserById(Long userId) {
+        if (!users.containsKey(userId)) {
+            throw new UserNotFoundException("Пользователь с ID=" + userId + " не найден!");
+        }
+        return users.get(userId);
+    }
+
+    @Override
+    public User delete(Long userId) {
+        if (userId == null) {
+            throw new ValidationException("Передан пустой аргумент!");
+        }
+        if (!users.containsKey(userId)) {
+            throw new UserNotFoundException("Пользователь с ID=" + userId + " не найден!");
+        }
+        for (User user : users.values()) {
+            user.getFriends().remove(userId);
+        }
+        return users.remove(userId);
+    }
+
+    private boolean isValidUser(User user) {
+        if (!user.getEmail().contains("@")) {
+            throw new ValidationException("Некорректный e-mail пользователя: " + user.getEmail());
+        }
+        if ((user.getLogin().isEmpty()) || (user.getLogin().contains(" "))) {
+            throw new ValidationException("Некорректный логин пользователя: " + user.getLogin());
+        }
+
+        if (user.getBirthday().isAfter(LocalDate.now())) {
+            throw new ValidationException("Некорректная дата рождения пользователя: " + user.getBirthday());
+        }
+        return true;
     }
 }
