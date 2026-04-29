@@ -25,12 +25,33 @@ public class GenreService {
         return genreDbStorage.getGenreById(id);
     }
 
-    public void putGenres(Film film) {
-        genreDbStorage.delete(film);
-        genreDbStorage.add(film);
-    }
-
     public Set<Genre> getFilmGenres(Long filmId) {
         return new HashSet<>(genreDbStorage.getFilmGenres(filmId));
+    }
+
+    public void setGenreNamesAndSave(Film film) {
+        if (film.getGenres() != null) {
+            for (Genre genre : film.getGenres()) {
+                Genre fullGenre = getGenreById(genre.getId());
+                genre.setName(fullGenre.getName());
+            }
+            genreDbStorage.delete(film);
+            genreDbStorage.add(film);
+        }
+    }
+
+    public void updateFilmGenres(Film film) {
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            List<Genre> sortGenres = film.getGenres().stream()
+                    .sorted(Comparator.comparing(Genre::getId))
+                    .collect(Collectors.toList());
+            film.setGenres(new LinkedHashSet<>(sortGenres));
+
+            for (Genre genre : film.getGenres()) {
+                genre.setName(getGenreById(genre.getId()).getName());
+            }
+        }
+        genreDbStorage.delete(film);
+        genreDbStorage.add(film);
     }
 }

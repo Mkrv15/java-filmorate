@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -8,9 +9,11 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.MpaNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.service.director.DirectorService;
 import ru.yandex.practicum.filmorate.service.genre.GenreService;
 import ru.yandex.practicum.filmorate.service.mpa.MpaService;
 import ru.yandex.practicum.filmorate.storage.like.LikeDbStorage;
@@ -19,6 +22,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Repository("filmDbStorage")
 @RequiredArgsConstructor
 public class FilmDbStorage implements FilmStorage {
@@ -27,6 +31,7 @@ public class FilmDbStorage implements FilmStorage {
     private final MpaService mpaService;
     private final GenreService genreService;
     private final LikeDbStorage likeDbStorage;
+    private final DirectorService directorService;
 
     @Override
     public List<Film> getFilms() {
@@ -90,12 +95,9 @@ public class FilmDbStorage implements FilmStorage {
                 .usingGeneratedKeyColumns("id");
         film.setId(simpleJdbcInsert.executeAndReturnKey(film.toMap()).longValue());
         film.setMpa(mpaService.getMpaById(film.getMpa().getId()));
-        if (film.getGenres() != null) {
-            for (Genre genre : film.getGenres()) {
-                genre.setName(genreService.getGenreById(genre.getId()).getName());
-            }
-            genreService.putGenres(film);
-        }
+
+        genreService.setGenreNamesAndSave(film);
+        directorService.setDirectorNamesAndSave(film);
         return film;
     }
 
@@ -117,16 +119,8 @@ public class FilmDbStorage implements FilmStorage {
                 film.getMpa().getId(),
                 film.getId()) != 0) {
             film.setMpa(mpaService.getMpaById(film.getMpa().getId()));
-            if (film.getGenres() != null) {
-                Collection<Genre> sortGenres = film.getGenres().stream()
-                        .sorted(Comparator.comparing(Genre::getId))
-                        .collect(Collectors.toList());
-                film.setGenres(new LinkedHashSet<>(sortGenres));
-                for (Genre genre : film.getGenres()) {
-                    genre.setName(genreService.getGenreById(genre.getId()).getName());
-                }
-            }
-            genreService.putGenres(film);
+            genreService.updateFilmGenres(film);
+            directorService.updateFilmDirectors(film);
             return film;
         } else {
             throw new FilmNotFoundException("Фильм с ID=" + film.getId() + " не найден!");
@@ -143,6 +137,7 @@ public class FilmDbStorage implements FilmStorage {
         if (filmRows.first()) {
             Mpa mpa = mpaService.getMpaById(filmRows.getInt("rating_id"));
             Set<Genre> genres = genreService.getFilmGenres(filmId);
+            Set<Director> directors = directorService.getFilmDirectors(filmId);
             film = new Film(
                     filmRows.getLong("id"),
                     filmRows.getString("name"),
@@ -151,7 +146,8 @@ public class FilmDbStorage implements FilmStorage {
                     filmRows.getInt("duration"),
                     new HashSet<>(likeDbStorage.getLikes(filmRows.getLong("id"))),
                     mpa,
-                    genres);
+                    genres,
+                    directors);
             if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
                 throw new ValidationException("Дата выхода фильма не может быть раньше 28.12.1895");
             }
@@ -162,6 +158,51 @@ public class FilmDbStorage implements FilmStorage {
             film.setGenres(null);
         }
         return film;
+    }
+
+    public List<Film> getFilmsByYear(Long directorId) {
+        String sql = "SELECT id, name, description, release_date, duration, rating_id " +
+                "FROM films " +
+                "LEFT JOIN film_directors ON films.id = film_directors.film_id " +
+                "WHERE film_directors.director_id = ? " +
+                "GROUP BY films.id " +
+                "ORDER BY release_date";
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new Film(
+                        rs.getLong("id"),
+                        rs.getString("name"),
+                        rs.getString("description"),
+                        rs.getDate("release_Date").toLocalDate(),
+                        rs.getInt("duration"),
+                        new HashSet<>(likeDbStorage.getLikes(rs.getLong("id"))),
+                        mpaService.getMpaById(rs.getInt("rating_id")),
+                        genreService.getFilmGenres(rs.getLong("id")),
+                        new HashSet<>(directorService.getFilmDirectors(rs.getLong("id")))),
+                directorId
+        );
+    }
+
+    public List<Film> getFilmsByLikes(Long directorId) {
+        String sql = "SELECT id, name, description, release_date, duration, rating_id " +
+                "FROM films " +
+                "LEFT JOIN film_directors ON films.id = film_directors.film_id " +
+                "LEFT JOIN film_likes ON films.id = film_likes.film_id " +
+                "WHERE film_directors.director_id = ? " +
+                "GROUP BY films.id " +
+                "ORDER BY COUNT(film_likes.user_id) DESC";
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new Film(
+                        rs.getLong("id"),
+                        rs.getString("name"),
+                        rs.getString("description"),
+                        rs.getDate("release_Date").toLocalDate(),
+                        rs.getInt("duration"),
+                        new HashSet<>(likeDbStorage.getLikes(rs.getLong("id"))),
+                        mpaService.getMpaById(rs.getInt("rating_id")),
+                        genreService.getFilmGenres(rs.getLong("id")),
+                        new HashSet<>(directorService.getFilmDirectors(rs.getLong("id")))),
+                directorId
+        );
     }
 
     @Override

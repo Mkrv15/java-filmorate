@@ -29,9 +29,10 @@ public class Film {
     @NotNull
     private Mpa mpa;
     private Set<Genre> genres = new HashSet<>();
+    private Set<Director> directors = new HashSet<>();
 
     public Film(Long id, String name, String description, LocalDate releaseDate, Integer duration,
-                Set<Long> likes, Mpa mpa, Set<Genre> genres) {
+                Set<Long> likes, Mpa mpa, Set<Genre> genres, Set<Director> directors) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -40,6 +41,7 @@ public class Film {
         this.likes = likes;
         this.mpa = mpa;
         this.genres = genres;
+        this.directors = directors;
     }
 
     public Map<String, Object> toMap() {
