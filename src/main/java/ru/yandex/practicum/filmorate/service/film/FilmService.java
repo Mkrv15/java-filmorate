@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service.film;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dto.FilmSearchBy;
 import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
@@ -12,7 +13,9 @@ import ru.yandex.practicum.filmorate.storage.like.LikeDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class FilmService {
@@ -97,5 +100,12 @@ public class FilmService {
 
     public Film delete(Long filmId) {
         return filmStorage.delete(filmId);
+    }
+
+    public List<Film> search(String query, Set<FilmSearchBy> by) {
+        Set<FilmSearchBy> effectiveBy = (by == null || by.isEmpty())
+                ? EnumSet.of(FilmSearchBy.TITLE)
+                : by;
+        return filmStorage.getFilmsByQuery(query, effectiveBy);
     }
 }

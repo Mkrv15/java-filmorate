@@ -4,10 +4,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.dto.FilmSearchBy;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.film.FilmService;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/films")
@@ -37,6 +39,12 @@ public class FilmController {
         log.info("Получен GET-запрос к эндпоинту: '/director/{}?sortBy={}' на получение фильмов с одним режиссером",
                 directorId, sortBy);
         return filmService.getDirectorFilms(directorId, sortBy);
+    }
+
+    @GetMapping("/search")
+    public List<Film> search(@RequestParam(required = false) String query,
+                             @RequestParam(required = false) Set<FilmSearchBy> by) {
+        return filmService.search(query, by);
     }
 
     @ResponseBody

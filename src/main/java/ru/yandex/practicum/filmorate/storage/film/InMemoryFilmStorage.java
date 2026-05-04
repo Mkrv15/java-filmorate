@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.dto.FilmSearchBy;
 import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -78,6 +79,18 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public List<Film> getRecommendations(Long userId) {
         return List.of();
+    }
+
+    @Override
+    public List<Film> getFilmsByQuery(String query, Set<FilmSearchBy> by) {
+        if (query == null || query.isBlank()) {
+            return new ArrayList<>(films.values());
+        }
+        String needle = query.toLowerCase();
+        boolean searchByTitle = by == null || by.isEmpty() || by.contains(FilmSearchBy.TITLE);
+        return films.values().stream()
+                .filter(f -> searchByTitle && f.getName().toLowerCase().contains(needle))
+                .toList();
     }
 
     private boolean isValidFilm(Film film) {
