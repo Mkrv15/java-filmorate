@@ -51,7 +51,7 @@ class LikeDbTests {
     void setUp() {
         Mpa mpa = mpaService.getMpaById(1);
         Film film = new Film(null, "Test Film", "Description",
-                LocalDate.of(2000, 1, 1), 120, new HashSet<>(), mpa, null,null);
+                LocalDate.of(2000, 1, 1), 120, new HashSet<>(), mpa, null, null);
         Film createdFilm = filmStorage.create(film);
         filmId = createdFilm.getId();
 

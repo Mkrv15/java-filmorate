@@ -27,7 +27,7 @@ public class Film {
     private Set<Long> likes;
     @NotNull
     private Mpa mpa;
-    private Set<Genre> genres ;
+    private Set<Genre> genres;
     private Set<Director> directors;
 
     public Film(Long id, String name, String description, LocalDate releaseDate, Integer duration,
