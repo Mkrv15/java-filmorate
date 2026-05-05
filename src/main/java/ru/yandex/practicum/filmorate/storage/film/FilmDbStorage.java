@@ -13,10 +13,10 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.service.director.DirectorService;
-import ru.yandex.practicum.filmorate.service.genre.GenreService;
-import ru.yandex.practicum.filmorate.service.mpa.MpaService;
+import ru.yandex.practicum.filmorate.storage.director.DirectorDbStorage;
+import ru.yandex.practicum.filmorate.storage.genre.GenreDbStorage;
 import ru.yandex.practicum.filmorate.storage.like.LikeDbStorage;
+import ru.yandex.practicum.filmorate.storage.mpa.MpaDbStorage;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -28,10 +28,10 @@ import java.util.stream.Collectors;
 public class FilmDbStorage implements FilmStorage {
 
     private final JdbcTemplate jdbcTemplate;
-    private final MpaService mpaService;
-    private final GenreService genreService;
+    private final MpaDbStorage mpaDbStorage;
+    private final GenreDbStorage genreDbStorage;
     private final LikeDbStorage likeDbStorage;
-    private final DirectorService directorService;
+    private final DirectorDbStorage directorDbStorage;
 
     @Override
     public List<Film> getFilms() {
@@ -94,10 +94,10 @@ public class FilmDbStorage implements FilmStorage {
                 .withTableName("films")
                 .usingGeneratedKeyColumns("id");
         film.setId(simpleJdbcInsert.executeAndReturnKey(film.toMap()).longValue());
-        film.setMpa(mpaService.getMpaById(film.getMpa().getId()));
+        film.setMpa(mpaDbStorage.getMpaById(film.getMpa().getId()));
 
-        genreService.setGenreNamesAndSave(film);
-        directorService.setDirectorNamesAndSave(film);
+        genreDbStorage.setGenreNamesAndSave(film);
+        directorDbStorage.setDirectorNamesAndSave(film);
         return film;
     }
 
@@ -118,9 +118,9 @@ public class FilmDbStorage implements FilmStorage {
                 film.getDuration(),
                 film.getMpa().getId(),
                 film.getId()) != 0) {
-            film.setMpa(mpaService.getMpaById(film.getMpa().getId()));
-            genreService.updateFilmGenres(film);
-            directorService.updateFilmDirectors(film);
+            film.setMpa(mpaDbStorage.getMpaById(film.getMpa().getId()));
+            genreDbStorage.updateFilmGenres(film);
+            directorDbStorage.updateFilmDirectors(film);
             return film;
         } else {
             throw new FilmNotFoundException("Фильм с ID=" + film.getId() + " не найден!");
@@ -135,9 +135,9 @@ public class FilmDbStorage implements FilmStorage {
         Film film;
         SqlRowSet filmRows = jdbcTemplate.queryForRowSet("SELECT * FROM films WHERE id = ?", filmId);
         if (filmRows.first()) {
-            Mpa mpa = mpaService.getMpaById(filmRows.getInt("rating_id"));
-            Set<Genre> genres = genreService.getFilmGenres(filmId);
-            Set<Director> directors = directorService.getFilmDirectors(filmId);
+            Mpa mpa = mpaDbStorage.getMpaById(filmRows.getInt("rating_id"));
+            Set<Genre> genres = genreDbStorage.getFilmGenres(filmId);
+            Set<Director> directors = directorDbStorage.getFilmDirectors(filmId);
             film = new Film(
                     filmRows.getLong("id"),
                     filmRows.getString("name"),
@@ -175,9 +175,9 @@ public class FilmDbStorage implements FilmStorage {
                         rs.getDate("release_Date").toLocalDate(),
                         rs.getInt("duration"),
                         new HashSet<>(likeDbStorage.getLikes(rs.getLong("id"))),
-                        mpaService.getMpaById(rs.getInt("rating_id")),
-                        genreService.getFilmGenres(rs.getLong("id")),
-                        new HashSet<>(directorService.getFilmDirectors(rs.getLong("id")))),
+                        mpaDbStorage.getMpaById(rs.getInt("rating_id")),
+                        genreDbStorage.getFilmGenres(rs.getLong("id")),
+                        directorDbStorage.getFilmDirectors(rs.getLong("id"))),
                 directorId
         );
     }
@@ -198,9 +198,9 @@ public class FilmDbStorage implements FilmStorage {
                         rs.getDate("release_Date").toLocalDate(),
                         rs.getInt("duration"),
                         new HashSet<>(likeDbStorage.getLikes(rs.getLong("id"))),
-                        mpaService.getMpaById(rs.getInt("rating_id")),
-                        genreService.getFilmGenres(rs.getLong("id")),
-                        new HashSet<>(directorService.getFilmDirectors(rs.getLong("id")))),
+                        mpaDbStorage.getMpaById(rs.getInt("rating_id")),
+                        genreDbStorage.getFilmGenres(rs.getLong("id")),
+                        directorDbStorage.getFilmDirectors(rs.getLong("id"))),
                 directorId
         );
     }
@@ -218,3 +218,4 @@ public class FilmDbStorage implements FilmStorage {
         return film;
     }
 }
+

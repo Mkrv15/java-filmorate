@@ -11,7 +11,8 @@ import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Repository
@@ -96,11 +97,37 @@ public class DirectorDbStorage {
         }
     }
 
-    public List<Director> getFilmDirectors(Long filmId) {
+    public Set<Director> getFilmDirectors(Long filmId) {
         String sql = "SELECT director_id, name FROM film_directors" +
                 " INNER JOIN directors ON director_id = id WHERE film_id = ?";
-        return jdbcTemplate.query(sql, (rs, rowNum) -> new Director(
+        return new HashSet<>(jdbcTemplate.query(sql, (rs, rowNum) -> new Director(
                 rs.getLong("director_id"), rs.getString("name")), filmId
-        );
+        ));
+    }
+
+    public void setDirectorNamesAndSave(Film film) {
+        if (film.getDirectors() != null) {
+            for (Director director : film.getDirectors()) {
+                Director fullDirector = getDirectorById(director.getId());
+                director.setName(fullDirector.getName());
+            }
+            delete(film);
+            add(film);
+        }
+    }
+
+    public void updateFilmDirectors(Film film) {
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            List<Director> sortDirectors = film.getDirectors().stream()
+                    .sorted(Comparator.comparing(Director::getId))
+                    .collect(Collectors.toList());
+            film.setDirectors(new LinkedHashSet<>(sortDirectors));
+
+            for (Director director : film.getDirectors()) {
+                director.setName(getDirectorById(director.getId()).getName());
+            }
+        }
+        delete(film);
+        add(film);
     }
 }
