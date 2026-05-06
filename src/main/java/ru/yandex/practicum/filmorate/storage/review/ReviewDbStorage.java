@@ -30,6 +30,7 @@ public class ReviewDbStorage implements ReviewStorage {
         values.put("film_id", review.getFilmId());
         values.put("user_id", review.getUserId());
         values.put("is_positive", review.getIsPositive());
+        values.put("useful", 0);
 
         review.setId(simpleJdbcInsert.executeAndReturnKey(values).longValue());
         review.setUseful(0);
