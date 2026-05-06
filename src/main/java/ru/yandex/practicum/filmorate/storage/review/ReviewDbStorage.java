@@ -3,63 +3,83 @@ package ru.yandex.practicum.filmorate.storage.review;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exceptions.ReviewNotFoundException;
-import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Repository("reviewDbStorage")
 @RequiredArgsConstructor
-public class ReviewDbStorage {
+public class ReviewDbStorage implements ReviewStorage {
     private final JdbcTemplate jdbcTemplate;
 
+    @Override
     public Review create(Review review) {
         SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("reviews")
                 .usingGeneratedKeyColumns("id");
 
-        review.setId(simpleJdbcInsert.executeAndReturnKey(review.toMap()).longValue());
+        Map<String, Object> values = new HashMap<>();
+        values.put("content", review.getContent());
+        values.put("film_id", review.getFilmId());
+        values.put("user_id", review.getUserId());
+        values.put("is_positive", review.getIsPositive());
 
+        review.setId(simpleJdbcInsert.executeAndReturnKey(values).longValue());
+        review.setUseful(0);
         return review;
     }
 
+    @Override
     public Review update(Review review) {
-        if (review == null) {
-            throw new ValidationException("Передан пустой аргумент!");
-        }
-
-        String sqlQuery = "UPDATE REVIEWS SET CONTENT = ?, IS_POSITIVE = ?, FILM_ID = ?, USER_ID = ? WHERE id = ?";
-        if (jdbcTemplate.update(sqlQuery, review.getContent(), review.getIsPositive(), review.getFilmId(), review.getUserId(), review.getId()) != 0) {
-            return review;
-        } else {
+        String sqlQuery = "UPDATE reviews SET content = ?, is_positive = ? WHERE id = ?";
+        int updated = jdbcTemplate.update(sqlQuery,
+                review.getContent(),
+                review.getIsPositive(),
+                review.getId());
+        if (updated == 0) {
             throw new ReviewNotFoundException("Отзыв с ID=" + review.getId() + " не найден!");
         }
+        return getReviewById(review.getId());
     }
 
+    @Override
     public List<Review> getReviewsByQuery(Long filmId, Integer count) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT * FROM REVIEWS"
-        );
-
+        StringBuilder sql = new StringBuilder("SELECT * FROM reviews");
         List<Object> params = new ArrayList<>();
-        boolean searchByFilm = filmId != null;
 
-        if (searchByFilm) {
-            sql.append(" WHERE FILM_ID = ?");
+        if (filmId != null) {
+            sql.append(" WHERE film_id = ?");
             params.add(filmId);
         }
-
-        if (count != null && count > 0) {
+        sql.append(" ORDER BY useful DESC");
+        if (count != null) {
             sql.append(" LIMIT ?");
             params.add(count);
         }
 
         return jdbcTemplate.query(sql.toString(), this::mapReview, params.toArray());
+    }
+
+    @Override
+    public Review getReviewById(Long reviewId) {
+        return jdbcTemplate.query("SELECT * FROM reviews WHERE id = ?", this::mapReview, reviewId)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new ReviewNotFoundException("Отзыв с ID=" + reviewId + " не найден!"));
+    }
+
+    @Override
+    public Review delete(Long reviewId) {
+        Review review = getReviewById(reviewId);
+        jdbcTemplate.update("DELETE FROM reviews WHERE id = ?", reviewId);
+        return review;
     }
 
     private Review mapReview(ResultSet rs, int rowNum) throws SQLException {
@@ -71,38 +91,5 @@ public class ReviewDbStorage {
                 .userId(rs.getLong("user_id"))
                 .useful(rs.getInt("useful"))
                 .build();
-    }
-
-    public Review getReviewById(Long reviewId) {
-        if (reviewId == null) {
-            throw new ValidationException("Передан пустой аргумент!");
-        }
-        Review review;
-        SqlRowSet reviewRows = jdbcTemplate.queryForRowSet("SELECT * FROM REVIEWS WHERE id = ?", reviewId);
-        if (reviewRows.first()) {
-            review = new Review(
-                    reviewRows.getLong("id"),
-                    reviewRows.getString("content"),
-                    reviewRows.getInt("useful"),
-                    reviewRows.getLong("film_id"),
-                    reviewRows.getLong("user_id"),
-                    reviewRows.getBoolean("is_positive")
-            );
-        } else {
-            throw new ReviewNotFoundException("Отзыв с ID=" + reviewId + " не найден!");
-        }
-
-        return review;
-    }
-
-    public Review delete(Long reviewId) {
-        if (reviewId == null) {
-            throw new ValidationException("Передан пустой аргумент!");
-        }
-        Review review = getReviewById(reviewId);
-        if (jdbcTemplate.update("DELETE FROM REVIEWS WHERE id = ? ", reviewId) == 0) {
-            throw new ReviewNotFoundException("Отзыв с ID=" + reviewId + " не найден!");
-        }
-        return review;
     }
 }
