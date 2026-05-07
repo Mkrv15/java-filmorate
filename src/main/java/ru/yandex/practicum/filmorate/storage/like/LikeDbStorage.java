@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.director.DirectorService;
 import ru.yandex.practicum.filmorate.service.genre.GenreService;
 import ru.yandex.practicum.filmorate.service.mpa.MpaService;
 
@@ -16,6 +17,7 @@ public class LikeDbStorage {
     private final JdbcTemplate jdbcTemplate;
     private final MpaService mpaService;
     private final GenreService genreService;
+    private final DirectorService directorService;
 
     public void addLike(Long filmId, Long userId) {
         String sql = "INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)";
@@ -40,7 +42,8 @@ public class LikeDbStorage {
                         rs.getInt("duration"),
                         new HashSet<>(getLikes(rs.getLong("id"))),
                         mpaService.getMpaById(rs.getInt("rating_id")),
-                        genreService.getFilmGenres(rs.getLong("id"))),
+                        genreService.getFilmGenres(rs.getLong("id")),
+                        directorService.getFilmDirectors(rs.getLong("id"))),
                 count);
     }
 

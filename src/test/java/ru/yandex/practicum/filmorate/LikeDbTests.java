@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate;
 
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +9,10 @@ import org.springframework.context.annotation.Import;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.director.DirectorService;
 import ru.yandex.practicum.filmorate.service.genre.GenreService;
 import ru.yandex.practicum.filmorate.service.mpa.MpaService;
+import ru.yandex.practicum.filmorate.storage.director.DirectorDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreDbStorage;
 import ru.yandex.practicum.filmorate.storage.like.LikeDbStorage;
@@ -27,7 +28,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @JdbcTest
 @AutoConfigureTestDatabase
 @Import({LikeDbStorage.class, FilmDbStorage.class, UserDbStorage.class,
-        MpaService.class, MpaDbStorage.class, GenreService.class, GenreDbStorage.class})
+        MpaService.class, MpaDbStorage.class, GenreService.class, GenreDbStorage.class,
+        DirectorService.class, DirectorDbStorage.class})
 class LikeDbTests {
 
     @Autowired
@@ -49,7 +51,7 @@ class LikeDbTests {
     void setUp() {
         Mpa mpa = mpaService.getMpaById(1);
         Film film = new Film(null, "Test Film", "Description",
-                LocalDate.of(2000, 1, 1), 120, new HashSet<>(), mpa, null);
+                LocalDate.of(2000, 1, 1), 120, new HashSet<>(), mpa, null, null);
         Film createdFilm = filmStorage.create(film);
         filmId = createdFilm.getId();
 
