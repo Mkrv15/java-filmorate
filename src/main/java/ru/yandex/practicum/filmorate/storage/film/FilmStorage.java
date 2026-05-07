@@ -14,8 +14,4 @@ public interface FilmStorage {
     Film getFilmById(Long filmId);
 
     Film delete(Long filmId);
-
-    List<Film> getFilmsByYear(Long directorId);
-
-    List<Film> getFilmsByLikes(Long directorId);
 }

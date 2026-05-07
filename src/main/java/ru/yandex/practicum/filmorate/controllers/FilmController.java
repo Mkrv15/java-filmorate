@@ -16,6 +16,7 @@ import java.util.List;
 public class FilmController {
     private final FilmService filmService;
 
+
     @GetMapping
     public List<Film> getFilms() {
         return filmService.getFilms();
@@ -31,19 +32,12 @@ public class FilmController {
         return filmService.getPopular(count);
     }
 
-    @GetMapping("/director/{directorId}")
-    public List<Film> getDirectorFilms(@PathVariable Long directorId,
-                                       @RequestParam(name = "sortBy", defaultValue = "like") String sortBy) {
-        log.info("Получен GET-запрос к эндпоинту: '/director/{}?sortBy={}' на получение фильмов с одним режиссером",
-                directorId, sortBy);
-        return filmService.getDirectorFilms(directorId, sortBy);
-    }
-
     @ResponseBody
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
         log.info("Получен POST-запрос к эндпоинту: '/films' на добавление фильма");
-        return filmService.create(film);
+        film = filmService.create(film);
+        return film;
     }
 
     @ResponseBody

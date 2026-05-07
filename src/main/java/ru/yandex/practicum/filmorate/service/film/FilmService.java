@@ -11,7 +11,6 @@ import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.like.LikeDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -60,19 +59,6 @@ public class FilmService {
             throw new ValidationException("Количество фильмов для вывода не должно быть меньше 1");
         }
         return likeStorage.getPopular(count);
-    }
-
-    public List<Film> getDirectorFilms(Long directorId, String sortBy) {
-        List<Film> films = new ArrayList<>();
-        switch (sortBy) {
-            case "year":
-                films = filmStorage.getFilmsByYear(directorId);
-                break;
-            case "likes":
-                films = filmStorage.getFilmsByLikes(directorId);
-                break;
-        }
-        return films;
     }
 
     public List<Film> getFilms() {
