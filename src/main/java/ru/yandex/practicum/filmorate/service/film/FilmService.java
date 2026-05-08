@@ -75,6 +75,9 @@ public class FilmService {
         return films;
     }
 
+    public List<Film> getRecommendations(Long userId) {
+        return filmStorage.getRecommendations(userId);
+    }
     public List<Film> getFilms() {
         return filmStorage.getFilms();
     }
