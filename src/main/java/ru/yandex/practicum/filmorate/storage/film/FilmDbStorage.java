@@ -219,6 +219,43 @@ public class FilmDbStorage implements FilmStorage {
         return film;
     }
 
+    @Override
+    public List<Film> getFilmsByQuery(String query, Set<FilmSearchBy> by) {
+        boolean hasQuery = query != null && !query.isBlank();
+        boolean byDirector = hasQuery && by != null && by.contains(FilmSearchBy.DIRECTOR);
+        boolean byTitle = hasQuery && (by == null || by.isEmpty() || by.contains(FilmSearchBy.TITLE));
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT DISTINCT f.*, r.id AS rating_id, r.name AS rating_name, " +
+                        "(SELECT COUNT(*) FROM film_likes l WHERE l.film_id = f.id) AS likes_cnt " +
+                        "FROM films f " +
+                        "LEFT JOIN ratings_mpa r ON f.rating_id = r.id ");
+
+        if (byDirector) {
+            sql.append("LEFT JOIN film_directors fd ON fd.film_id = f.id ")
+                    .append("LEFT JOIN directors d ON d.id = fd.director_id ");
+        }
+
+        List<Object> params = new ArrayList<>();
+        List<String> conditions = new ArrayList<>();
+        if (byTitle) {
+            conditions.add("LOWER(f.name) LIKE LOWER(?) ESCAPE '\\'");
+            params.add("%" + escapeLike(query) + "%");
+        }
+        if (byDirector) {
+            conditions.add("LOWER(d.name) LIKE LOWER(?) ESCAPE '\\'");
+            params.add("%" + escapeLike(query) + "%");
+        }
+        if (!conditions.isEmpty()) {
+            sql.append("WHERE ").append(String.join(" OR ", conditions)).append(' ');
+        }
+        sql.append("ORDER BY likes_cnt DESC");
+
+        List<Film> films = jdbcTemplate.query(sql.toString(), this::mapFilm, params.toArray());
+        enrich(films);
+        return films;
+    }
+
     private Film mapFilm(ResultSet rs, int rowNum) throws SQLException {
         Mpa mpa = new Mpa(rs.getInt("rating_id"), rs.getString("rating_name"));
         return Film.builder()
@@ -230,6 +267,7 @@ public class FilmDbStorage implements FilmStorage {
                 .mpa(mpa)
                 .likes(new HashSet<>())
                 .genres(new HashSet<>())
+                .directors(new HashSet<>())
                 .build();
     }
 
@@ -257,10 +295,22 @@ public class FilmDbStorage implements FilmStorage {
             genresMap.computeIfAbsent(filmId, k -> new HashSet<>()).add(genre);
         });
 
+        Map<Long, Set<Director>> directorsMap = new HashMap<>();
+        String directorsSql = "SELECT fd.film_id, d.id, d.name FROM film_directors fd " +
+                "JOIN directors d ON fd.director_id = d.id " +
+                "WHERE fd.film_id IN (" + ids + ") " +
+                "ORDER BY fd.film_id, d.id";
+        jdbcTemplate.query(directorsSql, rs -> {
+            Long filmId = rs.getLong("film_id");
+            Director director = new Director(rs.getLong("id"), rs.getString("name"));
+            directorsMap.computeIfAbsent(filmId, k -> new HashSet<>()).add(director);
+        });
+
         for (Film film : films) {
             film.setLikes(likesMap.getOrDefault(film.getId(), new HashSet<>()));
             Set<Genre> genres = genresMap.get(film.getId());
             film.setGenres(genres == null || genres.isEmpty() ? null : genres);
+            film.setDirectors(directorsMap.getOrDefault(film.getId(), new HashSet<>()));
         }
     }
 
