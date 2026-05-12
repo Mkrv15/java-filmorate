@@ -314,29 +314,6 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    @Override
-    public List<Film> getFilmsByQuery(String query, Set<FilmSearchBy> by) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT f.*, r.id AS rating_id, r.name AS rating_name, " +
-                        "(SELECT COUNT(*) FROM film_likes l WHERE l.film_id = f.id) AS likes_cnt " +
-                        "FROM films f " +
-                        "LEFT JOIN ratings_mpa r ON f.rating_id = r.id");
-
-        List<Object> params = new ArrayList<>();
-        boolean searchByTitle = query != null && !query.isBlank()
-                && (by == null || by.isEmpty() || by.contains(FilmSearchBy.TITLE));
-
-        if (searchByTitle) {
-            sql.append(" WHERE LOWER(f.name) LIKE LOWER(?) ESCAPE '\\'");
-            params.add("%" + escapeLike(query) + "%");
-        }
-        sql.append(" ORDER BY likes_cnt DESC");
-
-        List<Film> films = jdbcTemplate.query(sql.toString(), this::mapFilm, params.toArray());
-        enrich(films);
-        return films;
-    }
-
     private String escapeLike(String s) {
         return s.replace("\\", "\\\\")
                 .replace("%", "\\%")
