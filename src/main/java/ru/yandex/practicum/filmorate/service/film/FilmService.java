@@ -65,6 +65,10 @@ public class FilmService {
         return likeStorage.getPopular(count);
     }
 
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        return filmStorage.getCommonFilms(userId, friendId);
+    }
+
     public List<Film> getDirectorFilms(Long directorId, String sortBy) {
         List<Film> films = new ArrayList<>();
         switch (sortBy) {
