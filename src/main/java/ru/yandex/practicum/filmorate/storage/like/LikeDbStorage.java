@@ -40,7 +40,6 @@ public class LikeDbStorage {
     }
 
     public List<Film> getPopularByGenreAndYear(Integer count, Integer genreId, Integer year) {
-
         if (year == null) {
             String getPopularQueryByGenre = "SELECT id, name, description, release_date, duration, rating_id " +
                     "FROM films AS f " +
