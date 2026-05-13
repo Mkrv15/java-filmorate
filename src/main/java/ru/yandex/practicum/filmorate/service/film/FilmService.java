@@ -58,11 +58,15 @@ public class FilmService {
         }
     }
 
-    public List<Film> getPopular(Integer count) {
+    public List<Film> getPopular(Integer count, Integer genreId, Integer year) {
         if (count < 1) {
             throw new ValidationException("Количество фильмов для вывода не должно быть меньше 1");
         }
-        return likeStorage.getPopular(count);
+
+        if (genreId == null && year == null) {
+            return likeStorage.getPopular(count);
+        }
+        return likeStorage.getPopularByGenreAndYear(count, genreId, year);
     }
 
     public List<Film> getDirectorFilms(Long directorId, String sortBy) {
