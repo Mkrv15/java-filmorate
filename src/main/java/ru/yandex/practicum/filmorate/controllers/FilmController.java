@@ -47,6 +47,12 @@ public class FilmController {
         return filmService.search(query, by);
     }
 
+    @GetMapping("/common")
+    public List<Film> getCommonFilms(@RequestParam(name = "userId") Long userId,
+                                     @RequestParam(name = "friendId") Long friendId) {
+        return filmService.getCommonFilms(userId, friendId);
+    }
+
     @ResponseBody
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {

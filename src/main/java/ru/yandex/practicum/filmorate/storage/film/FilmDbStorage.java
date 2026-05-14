@@ -123,6 +123,25 @@ public class FilmDbStorage implements FilmStorage {
         return film;
     }
 
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        if (userId == null || friendId == null) {
+            throw new ValidationException("Передан пустой аргумент!");
+        }
+
+        String sql = "SELECT f.*, r.id AS rating_id, r.name AS rating_name " +
+                "FROM films AS f " +
+                "LEFT JOIN ratings_mpa AS r ON f.rating_id = r.id " +
+                "JOIN film_likes AS fl1 ON f.id = fl1.film_id " +
+                "JOIN film_likes AS fl2 ON f.id = fl2.film_id " +
+                "WHERE fl1.user_id = ? AND fl2.user_id = ? " +
+                "GROUP BY fl1.user_id " +
+                "ORDER BY COUNT(fl1.user_id)";
+
+        List<Film> films = jdbcTemplate.query(sql, this::mapFilm, userId, friendId);
+        enrich(films);
+        return films;
+    }
+
     public List<Film> getRecommendations(Long userId) {
         if (userId == null) {
             throw new ValidationException("Передан пустой аргумент!");
