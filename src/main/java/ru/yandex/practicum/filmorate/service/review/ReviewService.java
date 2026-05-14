@@ -3,7 +3,10 @@ package ru.yandex.practicum.filmorate.service.review;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.model.EventOperation;
+import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.service.event.EventService;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewLikeDbStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
@@ -18,32 +21,41 @@ public class ReviewService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
     private final ReviewLikeDbStorage reviewLikeStorage;
+    private final EventService eventService;
 
     @Autowired
     public ReviewService(@Qualifier("reviewDbStorage") ReviewStorage reviewStorage,
                          @Qualifier("filmDbStorage") FilmStorage filmStorage,
                          @Qualifier("userDbStorage") UserStorage userStorage,
-                         ReviewLikeDbStorage reviewLikeStorage) {
+                         ReviewLikeDbStorage reviewLikeStorage,
+                         EventService eventService) {
         this.reviewStorage = reviewStorage;
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.reviewLikeStorage = reviewLikeStorage;
+        this.eventService = eventService;
     }
 
     public Review create(Review review) {
         filmStorage.getFilmById(review.getFilmId());
         userStorage.getUserById(review.getUserId());
-        return reviewStorage.create(review);
+        Review filmReview = reviewStorage.create(review);
+        eventService.createEvent(review.getUserId(), EventType.REVIEW, EventOperation.ADD, review.getId());
+        return filmReview;
     }
 
     public Review update(Review review) {
         filmStorage.getFilmById(review.getFilmId());
         userStorage.getUserById(review.getUserId());
-        return reviewStorage.update(review);
+        Review filmReview = reviewStorage.update(review);
+        eventService.createEvent(review.getUserId(), EventType.REVIEW, EventOperation.UPDATE, review.getId());
+        return filmReview;
     }
 
     public Review delete(Long reviewId) {
-        return reviewStorage.delete(reviewId);
+        Review review = reviewStorage.delete(reviewId);
+        eventService.createEvent(review.getUserId(), EventType.REVIEW, EventOperation.REMOVE, review.getId());
+        return review;
     }
 
     public Review findById(Long reviewId) {

@@ -69,3 +69,13 @@ CREATE TABLE IF NOT EXISTS review_likes(
     is_like   bool NOT NULL,
     PRIMARY KEY (review_id, user_id)
 );
+
+CREATE TABLE if NOT EXISTS feed(
+    event_id int auto_increment,
+    user_id bigint REFERENCES users (id) ON DELETE CASCADE,
+    timestamp long NOT NULL,
+    event_type varchar(10) NOT NULL,
+    operation varchar(10) NOT NULL,
+    entity_id int NOT NULL,
+    PRIMARY KEY (event_id)
+);

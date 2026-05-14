@@ -7,7 +7,10 @@ import ru.yandex.practicum.filmorate.dto.FilmSearchBy;
 import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
+import ru.yandex.practicum.filmorate.model.EventOperation;
+import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.event.EventService;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.like.LikeDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -19,6 +22,7 @@ import java.util.Set;
 
 @Service
 public class FilmService {
+    private final EventService eventService;
     private FilmStorage filmStorage;
     private UserStorage userStorage;
     private LikeDbStorage likeStorage;
@@ -26,10 +30,11 @@ public class FilmService {
     @Autowired
     public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
                        @Qualifier("userDbStorage") UserStorage userStorage,
-                       LikeDbStorage likeDbStorage) {
+                       LikeDbStorage likeDbStorage, EventService eventService) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.likeStorage = likeDbStorage;
+        this.eventService = eventService;
     }
 
     public void addLike(Long filmId, Long userId) {
@@ -37,6 +42,7 @@ public class FilmService {
         if (film != null) {
             if (userStorage.getUserById(userId) != null) {
                 likeStorage.addLike(filmId, userId);
+                eventService.createEvent(userId, EventType.LIKE, EventOperation.ADD, filmId);
             } else {
                 throw new UserNotFoundException("Пользователь c ID=" + userId + " не найден!");
             }
@@ -50,6 +56,7 @@ public class FilmService {
         if (film != null) {
             if (film.getLikes().contains(userId)) {
                 likeStorage.deleteLike(filmId, userId);
+                eventService.createEvent(userId, EventType.LIKE, EventOperation.REMOVE, filmId);
             } else {
                 throw new UserNotFoundException("Лайк от пользователя c ID=" + userId + " не найден!");
             }
