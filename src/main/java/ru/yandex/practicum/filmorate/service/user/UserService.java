@@ -4,7 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
+import ru.yandex.practicum.filmorate.model.EventOperation;
+import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.event.EventService;
 import ru.yandex.practicum.filmorate.storage.friend.FriendDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -17,11 +20,15 @@ import java.util.Set;
 public class UserService {
     private UserStorage userStorage;
     private FriendDbStorage friendDbStorage;
+    private EventService eventService;
 
     @Autowired
-    public UserService(@Qualifier("userDbStorage") UserStorage userStorage, FriendDbStorage friendDbStorage) {
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage,
+                       FriendDbStorage friendDbStorage,
+                       EventService eventService) {
         this.userStorage = userStorage;
         this.friendDbStorage = friendDbStorage;
+        this.eventService = eventService;
     }
 
     public void addFriend(Long userId, Long friendId) {
@@ -29,6 +36,7 @@ public class UserService {
             throw new ValidationException("Нельзя добавить самого себя в друзья!");
         }
         friendDbStorage.addFriend(userId, friendId);
+        eventService.createEvent(userId, EventType.FRIEND, EventOperation.ADD, friendId);
     }
 
     public void deleteFriend(Long userId, Long friendId) {
@@ -36,6 +44,7 @@ public class UserService {
             throw new ValidationException("Нельзя удалить самого себя из друзей!");
         }
         friendDbStorage.deleteFriend(userId, friendId);
+        eventService.createEvent(userId, EventType.FRIEND, EventOperation.REMOVE, friendId);
     }
 
     public List<User> getFriends(Long userId) {
