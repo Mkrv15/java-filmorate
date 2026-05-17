@@ -61,7 +61,7 @@ public class FilmDbStorage implements FilmStorage {
 
         genreDbStorage.setGenreNamesAndSave(film);
         directorDbStorage.setDirectorNamesAndSave(film);
-        return film;
+        return getFilmById(film.getId());
     }
 
     @Override

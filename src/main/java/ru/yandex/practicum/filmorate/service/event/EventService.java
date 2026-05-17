@@ -1,24 +1,31 @@
 package ru.yandex.practicum.filmorate.service.event;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.EventNotFoundException;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.EventOperation;
 import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.storage.event.EventDbStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class EventService {
     private final EventDbStorage eventDbStorage;
+    private final UserStorage userStorage;
+
+    public EventService(EventDbStorage eventDbStorage, @Qualifier("userDbStorage") UserStorage userStorage) {
+        this.eventDbStorage = eventDbStorage;
+        this.userStorage = userStorage;
+    }
 
     public List<Event> getFeed(Long userId) {
-        if (userId == null) throw new EventNotFoundException("Пользователя с id=" + userId + " не найден");
-
+        Optional.ofNullable(userStorage.getUserById(userId))
+                .orElseThrow(() -> new EventNotFoundException("Пользователя с id=" + userId + " не существует"));
         return eventDbStorage.getFeed(userId);
     }
 

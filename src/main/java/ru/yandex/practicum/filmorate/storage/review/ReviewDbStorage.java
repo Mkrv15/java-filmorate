@@ -72,7 +72,7 @@ public class ReviewDbStorage implements ReviewStorage {
     public Review getReviewById(Long reviewId) {
         return jdbcTemplate.query("SELECT * FROM reviews WHERE id = ?", this::mapReview, reviewId)
                 .stream()
-                .findFirst()
+                .findAny()
                 .orElseThrow(() -> new ReviewNotFoundException("Отзыв с ID=" + reviewId + " не найден!"));
     }
 
