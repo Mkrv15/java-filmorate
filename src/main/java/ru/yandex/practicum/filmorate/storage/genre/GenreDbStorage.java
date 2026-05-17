@@ -74,6 +74,8 @@ public class GenreDbStorage {
             for (Genre genre : film.getGenres()) {
                 genre.setName(getGenreById(genre.getId()).getName());
             }
+        } else {
+            film.setGenres(new LinkedHashSet<>());
         }
         delete(film);
         add(film);

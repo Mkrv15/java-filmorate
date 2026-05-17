@@ -30,7 +30,7 @@ name varchar(255) NOT NULL UNIQUE
 
 CREATE TABLE IF NOT EXISTS film_directors(
 film_id  bigint REFERENCES films (id) ON DELETE CASCADE,
-director_id bigint REFERENCES directors (id) ON DELETE RESTRICT,
+director_id bigint REFERENCES directors (id) ON DELETE CASCADE ,
 PRIMARY KEY (film_id, director_id)
 );
 

@@ -90,6 +90,9 @@ public class FilmService {
                 films = filmStorage.getFilmsByLikes(directorId);
                 break;
         }
+        if (films.isEmpty()) {
+            throw new FilmNotFoundException("Не найдены фильмы указанного режиссера");
+        }
         return films;
     }
 
