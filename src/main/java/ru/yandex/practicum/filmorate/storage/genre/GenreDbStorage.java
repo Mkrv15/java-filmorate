@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 public class GenreDbStorage {
     private final JdbcTemplate jdbcTemplate;
 
-
     public List<Genre> getGenres() {
         String sql = "SELECT * FROM genres";
         return jdbcTemplate.query(sql, (rs, rowNum) -> new Genre(
@@ -74,6 +73,8 @@ public class GenreDbStorage {
             for (Genre genre : film.getGenres()) {
                 genre.setName(getGenreById(genre.getId()).getName());
             }
+        } else {
+            film.setGenres(new LinkedHashSet<>());
         }
         delete(film);
         add(film);

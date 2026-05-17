@@ -41,14 +41,15 @@ public class FilmService {
         Film film = filmStorage.getFilmById(filmId);
         if (film != null) {
             if (userStorage.getUserById(userId) != null) {
-                likeStorage.addLike(filmId, userId);
-                eventService.createEvent(userId, EventType.LIKE, EventOperation.ADD, filmId);
+                if (!likeStorage.getLikes(filmId).contains(userId)) likeStorage.addLike(filmId, userId);
+
             } else {
                 throw new UserNotFoundException("Пользователь c ID=" + userId + " не найден!");
             }
         } else {
             throw new FilmNotFoundException("Фильм c ID=" + filmId + " не найден!");
         }
+        eventService.createEvent(userId, EventType.LIKE, EventOperation.ADD, filmId);
     }
 
     public void deleteLike(Long filmId, Long userId) {
@@ -56,13 +57,13 @@ public class FilmService {
         if (film != null) {
             if (film.getLikes().contains(userId)) {
                 likeStorage.deleteLike(filmId, userId);
-                eventService.createEvent(userId, EventType.LIKE, EventOperation.REMOVE, filmId);
             } else {
                 throw new UserNotFoundException("Лайк от пользователя c ID=" + userId + " не найден!");
             }
         } else {
             throw new FilmNotFoundException("Фильм c ID=" + filmId + " не найден!");
         }
+        eventService.createEvent(userId, EventType.LIKE, EventOperation.REMOVE, filmId);
     }
 
     public List<Film> getPopular(Integer count, Integer genreId, Integer year) {
@@ -89,6 +90,9 @@ public class FilmService {
             case "likes":
                 films = filmStorage.getFilmsByLikes(directorId);
                 break;
+        }
+        if (films.isEmpty()) {
+            throw new FilmNotFoundException("Не найдены фильмы указанного режиссера");
         }
         return films;
     }

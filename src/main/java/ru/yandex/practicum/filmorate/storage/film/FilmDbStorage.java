@@ -61,7 +61,7 @@ public class FilmDbStorage implements FilmStorage {
 
         genreDbStorage.setGenreNamesAndSave(film);
         directorDbStorage.setDirectorNamesAndSave(film);
-        return film;
+        return getFilmById(film.getId());
     }
 
     @Override
@@ -116,9 +116,6 @@ public class FilmDbStorage implements FilmStorage {
             }
         } else {
             throw new FilmNotFoundException("Фильм с ID=" + filmId + " не найден!");
-        }
-        if (film.getGenres().isEmpty()) {
-            film.setGenres(null);
         }
         return film;
     }
@@ -327,8 +324,7 @@ public class FilmDbStorage implements FilmStorage {
 
         for (Film film : films) {
             film.setLikes(likesMap.getOrDefault(film.getId(), new HashSet<>()));
-            Set<Genre> genres = genresMap.get(film.getId());
-            film.setGenres(genres == null || genres.isEmpty() ? null : genres);
+            film.setGenres(genresMap.getOrDefault(film.getId(), new HashSet<>()));
             film.setDirectors(directorsMap.getOrDefault(film.getId(), new HashSet<>()));
         }
     }

@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service.review;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exceptions.ReviewNotFoundException;
 import ru.yandex.practicum.filmorate.model.EventOperation;
 import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Review;
@@ -40,20 +41,23 @@ public class ReviewService {
         filmStorage.getFilmById(review.getFilmId());
         userStorage.getUserById(review.getUserId());
         Review filmReview = reviewStorage.create(review);
-        eventService.createEvent(review.getUserId(), EventType.REVIEW, EventOperation.ADD, review.getId());
+        eventService.createEvent(review.getUserId(), EventType.REVIEW, EventOperation.ADD, filmReview.getId());
         return filmReview;
     }
 
     public Review update(Review review) {
-        filmStorage.getFilmById(review.getFilmId());
-        userStorage.getUserById(review.getUserId());
         Review filmReview = reviewStorage.update(review);
-        eventService.createEvent(review.getUserId(), EventType.REVIEW, EventOperation.UPDATE, review.getId());
+        eventService.createEvent(filmReview.getUserId(), EventType.REVIEW,
+                EventOperation.UPDATE, review.getId());
+
         return filmReview;
     }
 
     public Review delete(Long reviewId) {
         Review review = reviewStorage.delete(reviewId);
+        if (review == null) {
+            throw new ReviewNotFoundException("Review with id=" + reviewId + " not found");
+        }
         eventService.createEvent(review.getUserId(), EventType.REVIEW, EventOperation.REMOVE, review.getId());
         return review;
     }
