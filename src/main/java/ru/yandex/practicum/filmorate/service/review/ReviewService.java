@@ -15,7 +15,6 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.List;
 import java.util.Optional;
-
 @Service
 public class ReviewService {
     private final ReviewStorage reviewStorage;
