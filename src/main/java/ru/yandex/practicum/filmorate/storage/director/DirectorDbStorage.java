@@ -130,4 +130,25 @@ public class DirectorDbStorage {
         delete(film);
         add(film);
     }
+
+    public Map<Long, Set<Director>> getFilmDirectorsBatch(List<Long> filmIds) {
+        if (filmIds == null || filmIds.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        String sql = "SELECT fd.film_id, d.id, d.name FROM film_directors fd " +
+                "JOIN directors d ON fd.director_id = d.id " +
+                "WHERE fd.film_id IN (" +
+                filmIds.stream().map(String::valueOf).collect(Collectors.joining(",")) + ") " +
+                "ORDER BY fd.film_id, d.id";
+
+        Map<Long, Set<Director>> directorsMap = new HashMap<>();
+        jdbcTemplate.query(sql, rs -> {
+            Long filmId = rs.getLong("film_id");
+            Director director = new Director(rs.getLong("id"), rs.getString("name"));
+            directorsMap.computeIfAbsent(filmId, k -> new HashSet<>()).add(director);
+        });
+
+        return directorsMap;
+    }
 }

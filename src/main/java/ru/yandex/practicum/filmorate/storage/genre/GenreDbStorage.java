@@ -90,4 +90,25 @@ public class GenreDbStorage {
             add(film);
         }
     }
+
+    public Map<Long, Set<Genre>> getFilmGenresBatch(List<Long> filmIds) {
+        if (filmIds == null || filmIds.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        String sql = "SELECT fg.film_id, g.id, g.name FROM film_genres fg " +
+                "JOIN genres g ON fg.genre_id = g.id " +
+                "WHERE fg.film_id IN (" +
+                filmIds.stream().map(String::valueOf).collect(Collectors.joining(",")) + ") " +
+                "ORDER BY fg.film_id, g.id";
+
+        Map<Long, Set<Genre>> genresMap = new HashMap<>();
+        jdbcTemplate.query(sql, rs -> {
+            Long filmId = rs.getLong("film_id");
+            Genre genre = new Genre(rs.getInt("id"), rs.getString("name"));
+            genresMap.computeIfAbsent(filmId, k -> new HashSet<>()).add(genre);
+        });
+
+        return genresMap;
+    }
 }

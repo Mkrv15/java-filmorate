@@ -35,7 +35,7 @@ public class DirectorService {
         return directorDbStorage.delete(id);
     }
 
-    public Set<Director> getFilmDirectors(Long filmId) {
-        return directorDbStorage.getFilmDirectors(filmId);
+    public Map<Long, Set<Director>> getFilmDirectorsBatch(List<Long> filmIds) {
+        return directorDbStorage.getFilmDirectorsBatch(filmIds);
     }
 }

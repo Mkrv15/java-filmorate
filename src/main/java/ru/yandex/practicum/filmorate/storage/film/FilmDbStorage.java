@@ -125,14 +125,16 @@ public class FilmDbStorage implements FilmStorage {
             throw new ValidationException("Передан пустой аргумент!");
         }
 
-        String sql = "SELECT f.*, r.id AS rating_id, r.name AS rating_name " +
+        String sql = "SELECT f.*, r.id AS rating_id, r.name AS rating_name, " +
+                "COUNT(DISTINCT fl_all.user_id) AS total_likes " +
                 "FROM films AS f " +
                 "LEFT JOIN ratings_mpa AS r ON f.rating_id = r.id " +
-                "JOIN film_likes AS fl1 ON f.id = fl1.film_id " +
-                "JOIN film_likes AS fl2 ON f.id = fl2.film_id " +
-                "WHERE fl1.user_id = ? AND fl2.user_id = ? " +
-                "GROUP BY fl1.user_id " +
-                "ORDER BY COUNT(fl1.user_id)";
+                "INNER JOIN film_likes AS fl1 ON f.id = fl1.film_id AND fl1.user_id = ? " +
+                "INNER JOIN film_likes AS fl2 ON f.id = fl2.film_id AND fl2.user_id = ? " +
+                "LEFT JOIN film_likes AS fl_all ON f.id = fl_all.film_id " +
+                "GROUP BY f.id, f.name, f.description, f.release_date, " +
+                "f.duration, f.rating_id, r.id, r.name " +
+                "ORDER BY total_likes DESC";
 
         List<Film> films = jdbcTemplate.query(sql, this::mapFilm, userId, friendId);
         enrich(films);
@@ -242,29 +244,37 @@ public class FilmDbStorage implements FilmStorage {
         boolean byTitle = hasQuery && (by == null || by.isEmpty() || by.contains(FilmSearchBy.TITLE));
 
         StringBuilder sql = new StringBuilder(
-                "SELECT DISTINCT f.*, r.id AS rating_id, r.name AS rating_name, " +
-                        "(SELECT COUNT(*) FROM film_likes l WHERE l.film_id = f.id) AS likes_cnt " +
+                "SELECT f.*, r.id AS rating_id, r.name AS rating_name, " +
+                        "COUNT(l.user_id) AS likes_cnt " +
                         "FROM films f " +
-                        "LEFT JOIN ratings_mpa r ON f.rating_id = r.id ");
+                        "LEFT JOIN ratings_mpa r ON f.rating_id = r.id " +
+                        "LEFT JOIN film_likes l ON f.id = l.film_id ");
+
+        List<Object> params = new ArrayList<>();
+        List<String> conditions = new ArrayList<>();
 
         if (byDirector) {
             sql.append("LEFT JOIN film_directors fd ON fd.film_id = f.id ")
                     .append("LEFT JOIN directors d ON d.id = fd.director_id ");
         }
 
-        List<Object> params = new ArrayList<>();
-        List<String> conditions = new ArrayList<>();
         if (byTitle) {
             conditions.add("LOWER(f.name) LIKE LOWER(?) ESCAPE '\\'");
             params.add("%" + escapeLike(query) + "%");
         }
+
         if (byDirector) {
             conditions.add("LOWER(d.name) LIKE LOWER(?) ESCAPE '\\'");
             params.add("%" + escapeLike(query) + "%");
         }
+
         if (!conditions.isEmpty()) {
             sql.append("WHERE ").append(String.join(" OR ", conditions)).append(' ');
         }
+
+        sql.append("GROUP BY f.id, f.name, f.description, f.release_date, " +
+                "f.duration, f.rating_id, r.id, r.name ");
+
         sql.append("ORDER BY likes_cnt DESC");
 
         List<Film> films = jdbcTemplate.query(sql.toString(), this::mapFilm, params.toArray());

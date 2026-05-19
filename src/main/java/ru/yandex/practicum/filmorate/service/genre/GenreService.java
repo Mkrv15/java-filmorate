@@ -24,7 +24,7 @@ public class GenreService {
         return genreDbStorage.getGenreById(id);
     }
 
-    public Set<Genre> getFilmGenres(Long filmId) {
-        return genreDbStorage.getFilmGenres(filmId);
+    public Map<Long, Set<Genre>> getFilmGenresBatch(List<Long> filmIds) {
+        return genreDbStorage.getFilmGenresBatch(filmIds);
     }
 }
