@@ -9,13 +9,13 @@ import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
 public class GenreDbStorage {
     private final JdbcTemplate jdbcTemplate;
-
 
     public List<Genre> getGenres() {
         String sql = "SELECT * FROM genres";
@@ -55,11 +55,60 @@ public class GenreDbStorage {
         }
     }
 
-    public List<Genre> getFilmGenres(Long filmId) {
+    public Set<Genre> getFilmGenres(Long filmId) {
         String sql = "SELECT genre_id, name FROM film_genres" +
                 " INNER JOIN genres ON genre_id = id WHERE film_id = ?";
-        return jdbcTemplate.query(sql, (rs, rowNum) -> new Genre(
+        return new HashSet<>(jdbcTemplate.query(sql, (rs, rowNum) -> new Genre(
                 rs.getInt("genre_id"), rs.getString("name")), filmId
-        );
+        ));
+    }
+
+    public void updateFilmGenres(Film film) {
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            List<Genre> sortGenres = film.getGenres().stream()
+                    .sorted(Comparator.comparing(Genre::getId))
+                    .collect(Collectors.toList());
+            film.setGenres(new LinkedHashSet<>(sortGenres));
+
+            for (Genre genre : film.getGenres()) {
+                genre.setName(getGenreById(genre.getId()).getName());
+            }
+        } else {
+            film.setGenres(new LinkedHashSet<>());
+        }
+        delete(film);
+        add(film);
+    }
+
+    public void setGenreNamesAndSave(Film film) {
+        if (film.getGenres() != null) {
+            for (Genre genre : film.getGenres()) {
+                Genre fullGenre = getGenreById(genre.getId());
+                genre.setName(fullGenre.getName());
+            }
+            delete(film);
+            add(film);
+        }
+    }
+
+    public Map<Long, Set<Genre>> getFilmGenresBatch(List<Long> filmIds) {
+        if (filmIds == null || filmIds.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        String sql = "SELECT fg.film_id, g.id, g.name FROM film_genres fg " +
+                "JOIN genres g ON fg.genre_id = g.id " +
+                "WHERE fg.film_id IN (" +
+                filmIds.stream().map(String::valueOf).collect(Collectors.joining(",")) + ") " +
+                "ORDER BY fg.film_id, g.id";
+
+        Map<Long, Set<Genre>> genresMap = new HashMap<>();
+        jdbcTemplate.query(sql, rs -> {
+            Long filmId = rs.getLong("film_id");
+            Genre genre = new Genre(rs.getInt("id"), rs.getString("name"));
+            genresMap.computeIfAbsent(filmId, k -> new HashSet<>()).add(genre);
+        });
+
+        return genresMap;
     }
 }

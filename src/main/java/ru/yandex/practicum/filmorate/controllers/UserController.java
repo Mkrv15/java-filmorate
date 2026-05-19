@@ -6,7 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
+import ru.yandex.practicum.filmorate.model.Event;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.event.EventService;
+import ru.yandex.practicum.filmorate.service.film.FilmService;
 import ru.yandex.practicum.filmorate.service.user.UserService;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -18,11 +22,16 @@ import java.util.List;
 public class UserController {
     private UserStorage userStorage;
     private UserService userService;
+    private FilmService filmService;
+    private EventService eventService;
 
     @Autowired
-    public UserController(@Qualifier("userDbStorage") UserStorage userStorage, UserService userService) {
+    public UserController(@Qualifier("userDbStorage") UserStorage userStorage, UserService userService,
+                          FilmService filmService, EventService eventService) {
         this.userStorage = userStorage;
         this.userService = userService;
+        this.filmService = filmService;
+        this.eventService = eventService;
     }
 
     @GetMapping
@@ -43,6 +52,16 @@ public class UserController {
     @GetMapping("/{id}/friends/common/{otherId}")
     public List<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
         return userService.getCommonFriends(id, otherId);
+    }
+
+    @GetMapping("/{id}/recommendations")
+    public List<Film> getRecommendations(@PathVariable Long id) {
+        return filmService.getRecommendations(id);
+    }
+
+    @GetMapping("/{id}/feed")
+    public List<Event> getFeed(@PathVariable Long id) {
+        return eventService.getFeed(id);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
